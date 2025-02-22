@@ -1,8 +1,5 @@
 const http = require('http');
-const url = require('url');
-const { detectCase } = require('./convertToCase/detectCase');
-const { toWords } = require('./convertToCase/toWords');
-const { wordsToCase } = require('./convertToCase/wordsToCase');
+const { convertToCase } = require('./convertToCase/convertToCase');
 
 const SUPPORTED_CASES = ['SNAKE', 'KEBAB', 'CAMEL', 'PASCAL', 'UPPER'];
 
@@ -13,7 +10,6 @@ function createServer() {
     const toCase = params.get('toCase');
 
     const errors = [];
-
     const text = path.slice(1);
 
     if (!text) {
@@ -37,18 +33,11 @@ function createServer() {
     if (errors.length > 0) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ errors }));
-
       return;
     }
 
     try {
-      const originalCase = detectCase(text);
-
-      const words = toWords(text, originalCase);
-
-      const convertedText = wordsToCase(words, toCase);
-
-      const result = { originalCase, convertedText };
+      const result = convertToCase(text, toCase);
 
       const responseBody = {
         originalCase: result.originalCase,
@@ -61,11 +50,10 @@ function createServer() {
       res.end(JSON.stringify(responseBody));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
-
       res.end(
         JSON.stringify({
           errors: [{ message: `Internal server error: ${error.message}` }],
-        }),
+        })
       );
     }
   });
